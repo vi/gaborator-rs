@@ -7,8 +7,9 @@
 //! * No visualisation
 //! * Coefficients must be copied to/from Rust side. `process` need to be called twice - to read and to write.
 //! * Crate soundness may be iffy - I was just following the path of least resistance.
+//! * Arithmentic overflows in buffer length calculations are not checked.
 //!
-//! Currently based on Gaborator version 1.6
+//! Currently based on Gaborator version 1.6. Source code of Gaborator is included into the crate.
 //!
 //! License of Gaborator is Affero GPL 3.0.
 //!
@@ -30,6 +31,11 @@ pub mod ffi {
     struct Coef {
         re: f32,
         im: f32,
+    }
+    #[repr(u8)]
+    enum WriteCoefficientsMode {
+        Fill,
+        OnlyOverwrite,
     }
 
     unsafe extern "C++" {
@@ -80,7 +86,7 @@ pub mod ffi {
             output: &mut Vec<Coef>,
         );
 
-        /// Corresponds to `fill` function of Gaborator.
+        /// Corresponds to `fill` or `process` function of Gaborator (depending on `mode` parameter)
         /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
         /// Unlike `read_coefficients`, `from_sample_time` / `to_sample_time` should not be set to overtly large range, lest memory will be exhausted.
         /// Function applied to `process` is a fixed one: it ignores band and time parameter and just 
@@ -93,6 +99,30 @@ pub mod ffi {
             to_sample_time: i64,
             coefs: Pin<&mut Coefs>,
             input: &Vec<Coef>,
+            mode: WriteCoefficientsMode,
+        );
+
+        /// Spectrum analyze the samples at `signal` and add the resulting coefficients to `coefs`.
+        /// `t1` parameter from Gaborator's `analyze` method is caluclated based on supplied slice size.
+        ///
+        /// If the `coefs` object already contains some coefficients, the new coefficients are summed to those already present.
+        pub fn analyze(
+            b : &Analyzer,
+            signal: &[f32],
+            signal_begin_sample_number: i64,
+            coefs: Pin<&mut Coefs>,
+        );
+            
+        /// Synthesize signal samples from the coefficients `coef` and store them at `signal`. 
+        /// `t1` parameter from Gaborator's `synthesize` method is caluclated based on supplied slice size.
+        /// 
+        /// The time range may extend outside the range analyzed using analyze(), in which case
+        /// the signal is assumed to be zero in the un-analyzed range.
+        pub fn synthesize(
+            b : &Analyzer,
+            coefs: &Coefs,
+            signal_begin_sample_number: i64,
+            signal: &mut [f32],
         );
     }
 }

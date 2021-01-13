@@ -7,6 +7,7 @@ namespace gabbridge {
 
 struct Params;
 struct Coef;
+enum class WriteCoefficientsMode: uint8_t;
 
 typedef gaborator::analyzer<float> Analyzer;
 typedef gaborator::coefs<float> Coefs;
@@ -32,6 +33,17 @@ void write_coefficients(
              int64_t from_sample_time,
              int64_t to_sample_time,
              Coefs &coefs,
-             const rust::Vec<Coef>& input);
+             const rust::Vec<Coef>& input,
+             WriteCoefficientsMode mode);
+
+void analyze(const Analyzer& b,
+        rust::Slice<const float> signal,
+        int64_t signal_begin_sample_number,
+        Coefs &coefs);
+
+void synthesize(const Analyzer& b,
+        const Coefs &coefs,
+        int64_t signal_begin_sample_number,
+        rust::Slice<float> signal);
 
 } // namespace gabbridge

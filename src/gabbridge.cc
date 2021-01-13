@@ -52,23 +52,69 @@ void write_coefficients(
              int64_t from_sample_time,
              int64_t to_sample_time,
              Coefs &coefs,
-             const rust::Vec<Coef>& input)
+             const rust::Vec<Coef>& input,
+             WriteCoefficientsMode mode)
 {
     rust::Vec<const Coef>::iterator i = input.begin();
-    gaborator::fill(
-        [&i, &input](int, int64_t, std::complex<float> &coef) {
-            if (i != input.end()) {
-                coef = std::complex<float>(i->re, i->im);
-                ++i;
-            } else {
-                coef = 0.0;
-            }
-        },
-        (int)from_band,
-        (int)to_band,
-        from_sample_time,
-        to_sample_time,
+    switch (mode) {
+        case WriteCoefficientsMode::Fill:
+            gaborator::fill(
+                    [&i, &input](int, int64_t, std::complex<float> &coef) {
+                        if (i != input.end()) {
+                            coef = std::complex<float>(i->re, i->im);
+                            ++i;
+                        } else {
+                            coef = 0.0;
+                        }
+                    },
+                    (int)from_band,
+                    (int)to_band,
+                    from_sample_time,
+                    to_sample_time,
+                    coefs);
+            break;
+        case WriteCoefficientsMode::OnlyOverwrite:
+            gaborator::process(
+                    [&i, &input](int, int64_t, std::complex<float> &coef) {
+                        if (i != input.end()) {
+                            coef = std::complex<float>(i->re, i->im);
+                            ++i;
+                        } else {
+                            coef = 0.0;
+                        }
+                    },
+                    (int)from_band,
+                    (int)to_band,
+                    from_sample_time,
+                    to_sample_time,
+                    coefs);
+            break;
+    }
+   
+}
+
+void analyze(const Analyzer& b,
+        rust::Slice<const float> signal,
+        int64_t signal_begin_sample_number,
+        Coefs &coefs)
+{
+    b.analyze(
+        signal.data(),
+        signal_begin_sample_number,
+        signal_begin_sample_number + signal.length(),
         coefs);
+}
+
+void synthesize(const Analyzer& b,
+        const Coefs &coefs,
+        int64_t signal_begin_sample_number,
+        rust::Slice<float> signal)
+{
+    b.synthesize(
+        coefs,
+        signal_begin_sample_number,
+        signal_begin_sample_number + signal.length(),
+        signal.data());
 }
 
 } // namespace gabbridge

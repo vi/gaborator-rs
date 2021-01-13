@@ -1778,6 +1778,7 @@ public:
     {
         assert(msc.octaves.size() == n_octaves);
         (void)n_threads;
+        (void)level;
         buffers<T> buf(fftsize_max, sftsize_max);
         analyze_sliced(buf, 0, real_signal, t0, t1, msc);
     }
