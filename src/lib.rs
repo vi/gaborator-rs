@@ -33,7 +33,7 @@ pub mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("gaborator/src/gabbridge.h");
+        include!("gaborator-sys/src/gabbridge.h");
 
         pub type Analyzer;
         pub type Coefs;

@@ -9,7 +9,7 @@
 #ifndef _GABORATOR_FFT_H
 #define _GABORATOR_FFT_H
 
-#include "gaborator/gaborator/fft_naive.h"
+#include "gaborator-sys/gaborator/fft_naive.h"
 
 #if GABORATOR_USE_VDSP
 #include "gaborator/fft_vdsp.h"

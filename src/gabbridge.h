@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "gaborator/gaborator/gaborator.h"
+#include "gaborator-sys/gaborator/gaborator.h"
 #include "rust/cxx.h"
 
 namespace gabbridge {

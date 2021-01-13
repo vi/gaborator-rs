@@ -25,13 +25,13 @@
 #include <map>
 #include <typeinfo>
 
-#include "gaborator/gaborator/fft.h"
-#include "gaborator/gaborator/gaussian.h"
-#include "gaborator/gaborator/linear_transform.h"
-#include "gaborator/gaborator/pod_vector.h"
-#include "gaborator/gaborator/pool.h"
-#include "gaborator/gaborator/ref.h"
-#include "gaborator/gaborator/vector_math.h"
+#include "gaborator-sys/gaborator/fft.h"
+#include "gaborator-sys/gaborator/gaussian.h"
+#include "gaborator-sys/gaborator/linear_transform.h"
+#include "gaborator-sys/gaborator/pod_vector.h"
+#include "gaborator-sys/gaborator/pool.h"
+#include "gaborator-sys/gaborator/ref.h"
+#include "gaborator-sys/gaborator/vector_math.h"
 
 
 namespace gaborator {

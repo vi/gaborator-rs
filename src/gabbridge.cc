@@ -1,5 +1,5 @@
-#include "gaborator/src/gabbridge.h"
-#include "gaborator/src/lib.rs.h"
+#include "gaborator-sys/src/gabbridge.h"
+#include "gaborator-sys/src/lib.rs.h"
 
 namespace gabbridge {
 
