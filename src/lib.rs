@@ -1,7 +1,12 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+#![allow(unused)]
+
+#[cxx::bridge]
+mod ffi {
+    unsafe extern "C++" {
+        include!("gaborator/src/gabbridge.h");
+
+        type GabBridge;
+
+        fn new_gabbridge() -> UniquePtr<GabBridge>;
     }
 }

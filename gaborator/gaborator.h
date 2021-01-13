@@ -25,13 +25,13 @@
 #include <map>
 #include <typeinfo>
 
-#include "gaborator/fft.h"
-#include "gaborator/gaussian.h"
-#include "gaborator/linear_transform.h"
-#include "gaborator/pod_vector.h"
-#include "gaborator/pool.h"
-#include "gaborator/ref.h"
-#include "gaborator/vector_math.h"
+#include "gaborator/gaborator/fft.h"
+#include "gaborator/gaborator/gaussian.h"
+#include "gaborator/gaborator/linear_transform.h"
+#include "gaborator/gaborator/pod_vector.h"
+#include "gaborator/gaborator/pool.h"
+#include "gaborator/gaborator/ref.h"
+#include "gaborator/gaborator/vector_math.h"
 
 
 namespace gaborator {
@@ -626,6 +626,7 @@ band_scale_exp(const zone_coefs_meta &meta, int oct, unsigned int obno) {
 
 static inline coef_index_t
 coef_time(const zone_coefs_meta &meta, slice_index_t sli, int oct, int obno) {
+    (void)oct;
     int len = meta.bands[obno].slice_len;
     return coef_offset(len) + sli * len;
 }
