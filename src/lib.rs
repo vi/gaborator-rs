@@ -58,6 +58,16 @@ pub mod ffi {
         pub im: f32,
     }
 
+    /// Additional data for `read_coefficients_with_meta` or `write_coefficients_with_meta`
+    pub struct CoefMeta {
+        /// The band number of the frequency band the coefficients pertain to.
+        /// This may be either a bandpass band or the lowpass band.
+        band: i32,
+
+        /// The point in time the coefficients pertain to, in samples
+        sample_time: i64,
+    }
+
     /// Whether to use `fill` or `process` function of `gaborator`.
     #[repr(u8)]
     pub enum WriteCoefficientsMode {
@@ -115,6 +125,17 @@ pub mod ffi {
             output: &mut Vec<Coef>,
         );
 
+        /// Same as `read_coefficients`, but band and time parameters are appended to separate vector instead of being ignored
+        pub fn read_coefficients_with_meta(
+            from_band: i32,
+            to_band: i32,
+            from_sample_time: i64,
+            to_sample_time: i64,
+            coefs: Pin<&mut Coefs>,
+            output: &mut Vec<Coef>,
+            output_meta: &mut Vec<CoefMeta>,
+        );
+
         /// Corresponds to `fill` or `process` function of Gaborator (depending on `mode` parameter)
         /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
         /// Unlike `read_coefficients`, `from_sample_time` / `to_sample_time` should not be set to overtly large range, lest memory will be exhausted.
@@ -130,6 +151,20 @@ pub mod ffi {
             input: &Vec<Coef>,
             mode: WriteCoefficientsMode,
         );
+
+        /// Same as `read_coefficients`, but band and time parameters checked against supplied vector.
+        /// Function returns `true` if everything matches and `false` if there was some mismatch.
+        /// `false` is also returned if supplied vectors were too short.
+        pub fn write_coefficients_with_meta(
+            from_band: i32,
+            to_band: i32,
+            from_sample_time: i64,
+            to_sample_time: i64,
+            coefs: Pin<&mut Coefs>,
+            input: &Vec<Coef>,
+            input_meta: &Vec<CoefMeta>,
+            mode: WriteCoefficientsMode,
+        ) -> bool;
 
         /// Spectrum analyze the samples at `signal` and add the resulting coefficients to `coefs`.
         /// `t1` parameter from Gaborator's `analyze` method is caluclated based on supplied slice size.

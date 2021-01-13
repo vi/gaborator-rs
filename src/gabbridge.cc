@@ -46,6 +46,34 @@ void read_coefficients(
         coefs);
 }
 
+void read_coefficients_with_meta(
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             Coefs &coefs,
+             rust::Vec<Coef>& output,
+             rust::Vec<CoefMeta>& output_meta)
+{
+    gaborator::process(
+        [&output, &output_meta](int b, int64_t t, std::complex<float> &coef) {
+            Coef c;
+            c.re = real(coef);
+            c.im = imag(coef);
+            output.push_back(std::move(c));
+
+            CoefMeta m;
+            m.band = (int32_t) b;
+            m.sample_time = t;
+            output_meta.push_back(std::move(m));
+        },
+        (int)from_band,
+        (int)to_band,
+        from_sample_time,
+        to_sample_time,
+        coefs);
+}
+
 void write_coefficients(
              int32_t from_band,
              int32_t to_band,
@@ -89,8 +117,67 @@ void write_coefficients(
                     to_sample_time,
                     coefs);
             break;
+    }  
+}
+
+bool write_coefficients_with_meta(
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             Coefs &coefs,
+             const rust::Vec<Coef>& input,
+             const rust::Vec<CoefMeta>& input_meta,
+             WriteCoefficientsMode mode)
+{
+    rust::Vec<const Coef>::iterator i = input.begin();
+    rust::Vec<const CoefMeta>::iterator m = input_meta.begin();
+    bool ok = true;
+    switch (mode) {
+        case WriteCoefficientsMode::Fill:
+            gaborator::fill(
+                    [&ok, &i, &input, &m, &input_meta](int b, int64_t t, std::complex<float> &coef) {
+                        if (i != input.end() && m != input_meta.end()) {
+                            if (m->band != (int32_t) b || m->sample_time != t) {
+                                ok = false;
+                            }
+                            coef = std::complex<float>(i->re, i->im);
+                            ++i;
+                            ++m;
+                        } else {
+                            coef = 0.0;
+                            ok = false;
+                        }
+                    },
+                    (int)from_band,
+                    (int)to_band,
+                    from_sample_time,
+                    to_sample_time,
+                    coefs);
+            break;
+        case WriteCoefficientsMode::OnlyOverwrite:
+            gaborator::process(
+                    [&ok, &i, &input, &m, &input_meta](int b, int64_t t, std::complex<float> &coef) {
+                        if (i != input.end() && m != input_meta.end()) {
+                            if (m->band != (int32_t) b || m->sample_time != t) {
+                                ok = false;
+                            }
+                            coef = std::complex<float>(i->re, i->im);
+                            ++i;
+                            ++m;
+                        } else {
+                            coef = 0.0;
+                            ok = false;
+                        }
+                    },
+                    (int)from_band,
+                    (int)to_band,
+                    from_sample_time,
+                    to_sample_time,
+                    coefs);
+            break;
     }
-   
+    return ok;
 }
 
 void analyze(const Analyzer& b,
