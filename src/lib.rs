@@ -22,19 +22,48 @@
 
 #[cxx::bridge(namespace = "gabbridge")]
 pub mod ffi {
-    struct Params {
-        bands_per_octave: u32,
-        ff_min: f64,
-        ff_ref: f64,
-        overlap: f64,
+    /// Corresponds to `gaborator::parameters`.
+    pub struct Params {
+        /// The number of frequency bands per octave.
+        /// Values from 6 to 384 (inclusive) are supported.
+        /// Values outside this range may not work, or may cause degraded performance.
+        pub bands_per_octave: u32,
+
+        /// The lower limit of the analysis frequency range, in units of the sample rate.
+        /// The analysis filter bank will extend low enough in frequency that ff_min falls
+        /// between the two lowest frequency bandpass filters. Values from 0.001 to 0.13 are supported.
+        pub ff_min: f64,
+
+        /// The reference frequency, in units of the sample rate. This allows fine-tuning of
+        /// the analysis and synthesis filter banks such that the center frequency of one of
+        /// the filters is aligned with ff_ref. If ff_ref falls outside the frequency range of
+        /// the bandpass filter bank, this works as if the range were extended to include ff_ref.
+        /// Must be positive. A typical value when analyzing music is 440.0 / fs, where fs is the sample rate in Hz. 
+        ///
+        /// Default value in C++ code is `1.0`.
+        pub ff_ref: f64,
+
+        /// A field not documented in Gaborator reference.
+        ///
+        /// Default value in C++ code is `0.7`.
+        pub overlap: f64,
     }
-    struct Coef {
-        re: f32,
-        im: f32,
+
+    /// Complex point, representing one coefficient.
+    /// Magnitude is loudness at this point, argument is phase.
+    pub struct Coef {
+        /// Real part of the complex number
+        pub re: f32,
+        /// Imaginatry part of the complex number
+        pub im: f32,
     }
+
+    /// Whether to use `fill` or `process` function of `gaborator`.
     #[repr(u8)]
-    enum WriteCoefficientsMode {
+    pub enum WriteCoefficientsMode {
+        /// Use `fill` function, create new coefficients when they are missing from `Coefs`.
         Fill,
+        /// Use `process` function, skip non-existing coefficients
         OnlyOverwrite,
     }
 
@@ -124,6 +153,28 @@ pub mod ffi {
             signal_begin_sample_number: i64,
             signal: &mut [f32],
         );
+
+        /// Return the smallest valid bandpass band number, corresponding to the highest-frequency bandpass filter.
+        /// 
+        /// The frequency bands of the analysis filter bank are numbered by nonnegative integers that
+        /// increase towards lower (sic) frequencies. There is a number of bandpass bands corresponding
+        /// to the logarithmically spaced bandpass analysis filters, from near 0.5 (half the sample rate)
+        /// to near fmin, and a single lowpass band containing the residual signal from frequencies below fmin.
+        pub fn  bandpass_bands_begin(b : &Analyzer) -> i32;
+
+        /// Return the bandpass band number one past the highest valid bandpass band number,
+        /// corresponding to one past the lowest-frequency bandpass filter. 
+        pub fn  bandpass_bands_end(b : &Analyzer) -> i32;
+
+        /// Return the band number of the lowpass band. 
+        pub fn  band_lowpass(b : &Analyzer)  -> i32;
+
+        /// Return the band number corresponding to the reference frequency `ff_ref`.
+        /// If `ff_ref` falls within the frequency range of the bandpass filter bank, this will be a valid bandpass band number, otherwise it will not. 
+        pub fn  band_ref(b : &Analyzer) -> i32;
+
+        /// Return the center frequency of band number `band`, in units of the sampling frequency. 
+        pub fn  band_ff(b : &Analyzer, band: i32) -> f64;
     }
 }
 
