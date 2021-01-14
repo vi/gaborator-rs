@@ -1,5 +1,6 @@
 //! Gaborator is a C++ library for converting audio samples to a special spectral representation
 //! that uses different FTT sizes based on whether it is bass or treble (oversimplifying here).
+//! The transformation is reversible.
 //! See [the website](https://www.gaborator.com/) for more info.
 //!
 //! This crate is a [cxx](https://cxx.rs/)-based wrapper of this library, allowing Rust code to use Gaborator (although with reduced efficiency).
@@ -10,15 +11,17 @@
 //! * Not performance-minded
 //! * Some overridable or low-level details not exposed
 //! * No visualisation
-//! * Coefficient content must be copied to/from Rust side. `process` needs to be called twice - to read and to write.
 //! * Crate soundness may be iffy - I was just followed the path of least resistance.
 //! * Arithmentic overflows in buffer length calculations are not checked.
 //! * No high-level API with methods.
-//! * Not really tested, apart from included examples.
+//! * Not really tested, apart from included examples. For example, streaming should be supported, but I haven't tried it myself.
 //!
 //! Currently based on Gaborator version 1.6. Source code of the Gaborator is included into the crate.
 //! 
-//! There is one example available that randomizes phase information of each coefficient, creating sort-of-reverberation audio effect. 
+//! Availble examples:
+//! 
+//! * Phase information randomizer, creating sort-of-reverberation audio effect.
+//! * Converts the analyzed sound to (sample,band,magnitude,phase) CSV file and back.
 //!
 //! License of Gaborator is Affero GPL 3.0.
 //!
@@ -59,6 +62,7 @@ mod ffi {
 
     /// Complex point, representing one coefficient.
     /// Magnitude is loudness at this point, argument is phase.
+    #[derive(Copy,Clone,Debug,PartialEq,PartialOrd,Default)]
     pub struct Coef {
         /// Real part of the complex number
         pub re: f32,
@@ -67,6 +71,7 @@ mod ffi {
     }
 
     /// Additional data for `read_coefficients_with_meta` or `write_coefficients_with_meta`
+    #[derive(Copy,Clone,Debug,PartialEq,PartialOrd,Default,Eq,Ord,Hash)]
     pub struct CoefMeta {
         /// The band number of the frequency band the coefficients pertain to.
         /// This may be either a bandpass band or the lowpass band.
@@ -83,6 +88,12 @@ mod ffi {
         Fill,
         /// Use `process` function, skip non-existing coefficients
         OnlyOverwrite,
+    }
+
+    extern "Rust" {
+        type ProcessOrFillCallback<'a>;
+
+        fn process_or_write_callback(cb: &mut ProcessOrFillCallback, meta: CoefMeta, coef: &mut Coef);
     }
 
     unsafe extern "C++" {
@@ -125,6 +136,33 @@ mod ffi {
         /// ones for limit or later are not, and that the amount of memory consumed by
         /// any remaining coefficients before limit is bounded.
         pub fn forget_before(b: &Analyzer, c: Pin<&mut Coefs>, limit: i64, clean_cut: bool);
+
+
+        /// Read or write values within `Coefs`, skipping over non-existent entries.
+        /// Corresponds to `process` function of Gaborator.
+        /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
+        /// `from_sample_time` and `to_sample_time` can also be given INT64_MIN / INT64_MAX value to mean all available data.
+        pub fn process(
+            coefs: Pin<&mut Coefs>,
+            from_band: i32,
+            to_band: i32,
+            from_sample_time: i64,
+            to_sample_time: i64,
+            callback: &mut ProcessOrFillCallback,
+        );
+
+        /// Write values to `Coefs`, creating non-existent entries as needed.
+        /// Corresponds to `fill` function of Gaborator.
+        /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
+        /// `from_sample_time` / `to_sample_time` should not be set to overtly large range, lest memory will be exhausted.
+        pub fn fill(
+            coefs: Pin<&mut Coefs>,
+            from_band: i32,
+            to_band: i32,
+            from_sample_time: i64,
+            to_sample_time: i64,
+            callback: &mut ProcessOrFillCallback,
+        );
 
         /// Corresponds to `process` function of Gaborator, sans ability to edit coefficients.
         /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
@@ -228,4 +266,11 @@ mod ffi {
     }
 }
 
+
 pub use ffi::*;
+/// TODO
+pub struct ProcessOrFillCallback<'a>(pub Box<dyn FnMut(CoefMeta, &mut Coef) + 'a>);
+
+fn process_or_write_callback(cb: &mut ProcessOrFillCallback, meta: CoefMeta, coef: &mut Coef) {
+    cb.0(meta, coef);
+}

@@ -46,6 +46,63 @@ void read_coefficients(
         coefs);
 }
 
+void process(
+             Coefs &coefs,
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             ProcessOrFillCallback& callback)
+{
+    gaborator::process(
+        [&callback](int b, int64_t st, std::complex<float> &coef) {
+            Coef c;
+            c.re = real(coef);
+            c.im = imag(coef);
+            CoefMeta m;
+            m.band = b;
+            m.sample_time = st;
+
+            process_or_write_callback(callback, m, c);
+
+            coef = std::complex<float>(c.re, c.im);
+        },
+        (int)from_band,
+        (int)to_band,
+        from_sample_time,
+        to_sample_time,
+        coefs);
+}
+
+
+void fill(
+             Coefs &coefs,
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             ProcessOrFillCallback& callback)
+{
+    gaborator::fill(
+        [&callback](int b, int64_t st, std::complex<float> &coef) {
+            Coef c;
+            c.re = real(coef);
+            c.im = imag(coef);
+            CoefMeta m;
+            m.band = b;
+            m.sample_time = st;
+
+            process_or_write_callback(callback, m, c);
+
+            coef = std::complex<float>(c.re, c.im);
+        },
+        (int)from_band,
+        (int)to_band,
+        from_sample_time,
+        to_sample_time,
+        coefs);
+}
+
 void read_coefficients_with_meta(
              int32_t from_band,
              int32_t to_band,

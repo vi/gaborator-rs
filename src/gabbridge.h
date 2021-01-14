@@ -8,6 +8,7 @@ namespace gabbridge {
 struct Params;
 struct Coef;
 struct CoefMeta;
+struct ProcessOrFillCallback;
 enum class WriteCoefficientsMode: uint8_t;
 
 typedef gaborator::analyzer<float> Analyzer;
@@ -28,6 +29,21 @@ void read_coefficients(
              Coefs &coefs,
              rust::Vec<Coef>& output);
 
+void process(
+             Coefs &coefs,
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             ProcessOrFillCallback& callback);
+
+void fill(
+             Coefs &coefs,
+             int32_t from_band,
+             int32_t to_band,
+             int64_t from_sample_time,
+             int64_t to_sample_time,
+             ProcessOrFillCallback& callback);
 
 void read_coefficients_with_meta(
              int32_t from_band,

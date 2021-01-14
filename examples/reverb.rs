@@ -24,19 +24,15 @@ fn main() -> anyhow::Result<()> {
 
     gaborator_sys::analyze(&g, &samples, 0, coefs.pin_mut());
 
-    let mut coefs2 : Vec<gaborator_sys::Coef> = Vec::with_capacity(samples.len());
-
-    gaborator_sys::read_coefficients(-100000, 100000, -100000, 10000000000, coefs.pin_mut(), &mut coefs2);
-
-    for gaborator_sys::Coef{ref mut re,ref mut im} in &mut coefs2 {
-        let (magn, mut _phase) = num_complex::Complex::new(*re, *im).to_polar();
-        _phase *= 100000.0;
-        let q = num_complex::Complex::from_polar(magn, _phase);
-        *re = q.re;
-        *im = q.im;
-    }
-
-    gaborator_sys::write_coefficients(-100000, 100000, -100000, 10000000000, coefs.pin_mut(), &mut coefs2, gaborator_sys::WriteCoefficientsMode::OnlyOverwrite);
+    gaborator_sys::process(coefs.pin_mut(), -100000, 100000, -100000, 10000000000, &mut gaborator_sys::ProcessOrFillCallback(Box::new(
+        |_meta,coef| {
+            let (magn, mut _phase) = num_complex::Complex::new(coef.re, coef.im).to_polar();
+            _phase *= 100000.0;
+            let q = num_complex::Complex::from_polar(magn, _phase);
+            coef.re = q.re;
+            coef.im = q.im;
+        }
+    )));
 
     gaborator_sys::synthesize(&g, &coefs, 0, &mut samples);
 
