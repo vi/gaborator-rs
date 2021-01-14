@@ -1,10 +1,13 @@
 [package]
 name = "gaborator-sys"
 version = "0.1.0"
-authors = ["Vitaly _Vi Shukela <vi0oss@gmail.com>"]
+authors = ["Andreas Gustafsson <info@gaborator.com>", "Vitaly \"_Vi\" Shukela <vi0oss@gmail.com>"]
 edition = "2018"
 description = "Rust API for Gaborator audio processing library"
 license = "AGPL-3.0"
+keywords = ["audio","filter","fft","sound"]
+categories = ["multimedia::audio"]
+repository = "https://github.com/vi/gaborator-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
