@@ -1,27 +1,35 @@
-//!  Based on `streaming.cc` example from Gaborator source code
+//! Gaborator is a C++ library for converting audio samples to a special spectral representation
+//! that uses different FTT sizes based on whether it is bass or treble (oversimplifying here).
+//! See [the website](https://www.gaborator.com/) for more info.
+//!
+//! This crate is a [cxx](https://cxx.rs/)-based wrapper of this library, allowing Rust code to use Gaborator (although with reduced efficiency).
 //!
 //! Limitations:
+//!
 //! * `f32` only
 //! * Not performance-minded
 //! * Some overridable or low-level details not exposed
 //! * No visualisation
-//! * Coefficients must be copied to/from Rust side. `process` need to be called twice - to read and to write.
-//! * Crate soundness may be iffy - I was just following the path of least resistance.
+//! * Coefficient content must be copied to/from Rust side. `process` needs to be called twice - to read and to write.
+//! * Crate soundness may be iffy - I was just followed the path of least resistance.
 //! * Arithmentic overflows in buffer length calculations are not checked.
+//! * No high-level API with methods.
+//! * Not really tested, apart from included examples.
 //!
-//! Currently based on Gaborator version 1.6. Source code of Gaborator is included into the crate.
+//! Currently based on Gaborator version 1.6. Source code of the Gaborator is included into the crate.
+//! 
+//! There is one example available that randomizes phase information of each coefficient, creating sort-of-reverberation audio effect. 
 //!
 //! License of Gaborator is Affero GPL 3.0.
 //!
 //! Glue code (sans doccomments copied from Gaborator) in this crate may be considered
 //! to be licensed as either MIT or AGPL-3.0, at your option.
 
-#![allow(unused)]
-
+#![deny(missing_docs)]
 
 
 #[cxx::bridge(namespace = "gabbridge")]
-pub mod ffi {
+mod ffi {
     /// Corresponds to `gaborator::parameters`.
     pub struct Params {
         /// The number of frequency bands per octave.
@@ -80,9 +88,18 @@ pub mod ffi {
     unsafe extern "C++" {
         include!("gaborator-sys/src/gabbridge.h");
 
+        /// Represents C++'s `gaborator::analyzer<float>`. Use `new_analyzer` function to create it.
         pub type Analyzer;
+
+        /// Reprepresents C++'s `gaborator::coefs<float>`. Create it using `create_coefs`.
+        /// Can be memory-hungry.
+        /// 
+        /// (I'm not sure whether this can be dropped after `Analyzer`.
+        /// I see some mention of reference counting withing Gaborator library,
+        /// but have not checked in detail.)
         pub type Coefs;
 
+        /// Create new instance of Gaborator analyzer/synthesizer based on supplied parameters
         pub fn new_analyzer(params: &Params) -> UniquePtr<Analyzer>;
 
         /// Returns the one-sided worst-case time domain support of any of the analysis filters.
@@ -97,9 +114,7 @@ pub mod ffi {
         /// may be used in the synthesis, but substituting zeroes for the actual coefficient values will not significantly reduce accuracy.
         pub fn get_synthesis_support_len(b: &Analyzer) -> usize;
 
-        /// (I'm not sure whether this can be dropped before GabBridge
-        /// I see some mentioned of reference counting withing Gaborator library,
-        /// but have not checked in detail.)
+        /// Create `Coefs` - the holder of analyzed data. 
         pub fn create_coefs(b: &Analyzer) -> UniquePtr<Coefs>;
 
         /// Allow the coefficients for points in time before limit 
