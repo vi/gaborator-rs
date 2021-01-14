@@ -21,14 +21,6 @@ size_t get_synthesis_support_len(const Analyzer& b);
 std::unique_ptr<Coefs> create_coefs(const Analyzer& b);
 void forget_before(const Analyzer& b, Coefs& c, int64_t limit, bool clean_cut);
 
-void read_coefficients(
-             int32_t from_band,
-             int32_t to_band,
-             int64_t from_sample_time,
-             int64_t to_sample_time,
-             Coefs &coefs,
-             rust::Vec<Coef>& output);
-
 void process(
              Coefs &coefs,
              int32_t from_band,
@@ -44,35 +36,6 @@ void fill(
              int64_t from_sample_time,
              int64_t to_sample_time,
              ProcessOrFillCallback& callback);
-
-void read_coefficients_with_meta(
-             int32_t from_band,
-             int32_t to_band,
-             int64_t from_sample_time,
-             int64_t to_sample_time,
-             Coefs &coefs,
-             rust::Vec<Coef>& output,
-             rust::Vec<CoefMeta>& output_meta);
-
-void write_coefficients(
-             int32_t from_band,
-             int32_t to_band,
-             int64_t from_sample_time,
-             int64_t to_sample_time,
-             Coefs &coefs,
-             const rust::Vec<Coef>& input,
-             WriteCoefficientsMode mode);
-
-
-bool write_coefficients_with_meta(
-             int32_t from_band,
-             int32_t to_band,
-             int64_t from_sample_time,
-             int64_t to_sample_time,
-             Coefs &coefs,
-             const rust::Vec<Coef>& input,
-             const rust::Vec<CoefMeta>& input_meta,
-             WriteCoefficientsMode mode);
 
 void analyze(const Analyzer& b,
         rust::Slice<const float> signal,

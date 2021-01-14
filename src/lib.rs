@@ -81,15 +81,6 @@ mod ffi {
         sample_time: i64,
     }
 
-    /// Whether to use `fill` or `process` function of `gaborator`.
-    #[repr(u8)]
-    pub enum WriteCoefficientsMode {
-        /// Use `fill` function, create new coefficients when they are missing from `Coefs`.
-        Fill,
-        /// Use `process` function, skip non-existing coefficients
-        OnlyOverwrite,
-    }
-
     extern "Rust" {
         type ProcessOrFillCallback<'a>;
 
@@ -163,61 +154,6 @@ mod ffi {
             to_sample_time: i64,
             callback: &mut ProcessOrFillCallback,
         );
-
-        /// Corresponds to `process` function of Gaborator, sans ability to edit coefficients.
-        /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
-        /// `from_sample_time` and `to_sample_time` can also be given INT64_MIN / INT64_MAX value to mean all available data.
-        /// Function applied to `process` is a fixed one: it ignores band and time parameter and just 
-        /// appends coefficient value to the given vector.
-        pub fn read_coefficients(
-            from_band: i32,
-            to_band: i32,
-            from_sample_time: i64,
-            to_sample_time: i64,
-            coefs: Pin<&mut Coefs>,
-            output: &mut Vec<Coef>,
-        );
-
-        /// Same as `read_coefficients`, but band and time parameters are appended to separate vector instead of being ignored
-        pub fn read_coefficients_with_meta(
-            from_band: i32,
-            to_band: i32,
-            from_sample_time: i64,
-            to_sample_time: i64,
-            coefs: Pin<&mut Coefs>,
-            output: &mut Vec<Coef>,
-            output_meta: &mut Vec<CoefMeta>,
-        );
-
-        /// Corresponds to `fill` or `process` function of Gaborator (depending on `mode` parameter)
-        /// `from_band` and `to_band` may be given INT_MIN / INT_MAX values, that would mean all bands.
-        /// Unlike `read_coefficients`, `from_sample_time` / `to_sample_time` should not be set to overtly large range, lest memory will be exhausted.
-        /// Function applied to `process` is a fixed one: it ignores band and time parameter and just 
-        /// sets coefficient value based on the given vector.
-        /// If vector is too short, remaining coefficients are filled in zeroes.
-        pub fn write_coefficients(
-            from_band: i32,
-            to_band: i32,
-            from_sample_time: i64,
-            to_sample_time: i64,
-            coefs: Pin<&mut Coefs>,
-            input: &Vec<Coef>,
-            mode: WriteCoefficientsMode,
-        );
-
-        /// Same as `read_coefficients`, but band and time parameters checked against supplied vector.
-        /// Function returns `true` if everything matches and `false` if there was some mismatch.
-        /// `false` is also returned if supplied vectors were too short.
-        pub fn write_coefficients_with_meta(
-            from_band: i32,
-            to_band: i32,
-            from_sample_time: i64,
-            to_sample_time: i64,
-            coefs: Pin<&mut Coefs>,
-            input: &Vec<Coef>,
-            input_meta: &Vec<CoefMeta>,
-            mode: WriteCoefficientsMode,
-        ) -> bool;
 
         /// Spectrum analyze the samples at `signal` and add the resulting coefficients to `coefs`.
         /// `t1` parameter from Gaborator's `analyze` method is caluclated based on supplied slice size.
