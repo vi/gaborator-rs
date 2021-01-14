@@ -68,12 +68,12 @@ void synthesize(const Analyzer& b,
         int64_t signal_begin_sample_number,
         rust::Slice<float> signal);
 
-int32_t bandpass_bands_begin(const Analyzer& b) { return b.bandpass_bands_begin(); }
-int32_t bandpass_bands_end(const Analyzer& b) { return b.bandpass_bands_end(); }
+inline int32_t bandpass_bands_begin(const Analyzer& b) { return b.bandpass_bands_begin(); }
+inline int32_t bandpass_bands_end(const Analyzer& b) { return b.bandpass_bands_end(); }
 
-int32_t band_lowpass(const Analyzer& b) { return b.band_lowpass(); }
-int32_t band_ref(const Analyzer& b) { return b.band_ref(); }
+inline int32_t band_lowpass(const Analyzer& b) { return b.band_lowpass(); }
+inline int32_t band_ref(const Analyzer& b) { return b.band_ref(); }
 
-double band_ff(const Analyzer& b, int32_t gbno) { return b.band_ff((int)gbno); }
+inline double band_ff(const Analyzer& b, int32_t gbno) { return b.band_ff((int)gbno); }
 
 } // namespace gabbridge
