@@ -14,3 +14,8 @@ cxx = "1.0"
 [build-dependencies]
 cxx-build = "1.0"
 
+[dev-dependencies]
+anyhow = "1.0.38"
+hound = "3.4.0"
+num-complex = "0.3.1"
+
