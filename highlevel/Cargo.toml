@@ -1,5 +1,5 @@
 [package]
-name = "gaborator-sys"
+name = "gaborator"
 version = "0.1.1"
 authors = ["Andreas Gustafsson <info@gaborator.com>", "Vitaly \"_Vi\" Shukela <vi0oss@gmail.com>"]
 edition = "2018"
@@ -12,15 +12,9 @@ repository = "https://github.com/vi/gaborator-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cxx = "1.0"
-
-[build-dependencies]
-cxx-build = "1.0"
+gaborator-sys = {version = "=0.1.1", path=".."}
 
 [dev-dependencies]
 anyhow = "1.0.38"
 hound = "3.4.0"
 num-complex = "0.3.1"
-
-[workspace]
-members = ["highlevel"]

@@ -13,7 +13,6 @@
 //! * No visualisation
 //! * Crate soundness may be iffy - I was just followed the path of least resistance.
 //! * Arithmentic overflows in buffer length calculations are not checked.
-//! * No high-level API with methods.
 //! * Not really tested, apart from included examples. For example, streaming should be supported, but I haven't tried it myself.
 //!
 //! Currently based on Gaborator version 1.6. Source code of the Gaborator is included into the crate.
@@ -30,6 +29,7 @@
 
 #![deny(missing_docs)]
 
+pub extern crate cxx;
 
 #[cxx::bridge(namespace = "gabbridge")]
 mod ffi {
