@@ -204,7 +204,17 @@ mod ffi {
 
 
 pub use ffi::*;
-/// TODO
+/// Wrapper for your callback function for `fill` or `process`.
+///
+/// Example:
+/// 
+/// ```no_build
+/// gaborator_sys::process(coefs.pin_mut(), -100000, 100000, -100000, 100000, &mut gaborator_sys::ProcessOrFillCallback(Box::new(
+///        |_meta,_coef| {
+///            // read _meta, read or write _coef
+///        }
+///    ))); 
+/// ```
 pub struct ProcessOrFillCallback<'a>(pub Box<dyn FnMut(CoefMeta, &mut Coef) + 'a>);
 
 fn process_or_write_callback(cb: &mut ProcessOrFillCallback, meta: CoefMeta, coef: &mut Coef) {
