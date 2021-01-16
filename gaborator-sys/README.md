@@ -1,4 +1,4 @@
-# gaborator
+# gaborator-sys
 
 Gaborator is a C++ library for converting audio samples to a special spectral representation
 that uses different FTT sizes based on whether it is bass or treble (oversimplifying here).

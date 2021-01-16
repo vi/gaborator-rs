@@ -13,28 +13,28 @@ fn main() -> anyhow::Result<()> {
         inp.into_samples::<i32>().map(|x|x.map(|s|s as f32 / 32768.00)).collect::<Result<Vec<_>,_>>()?
     };
 
-    let g = gaborator_sys::new_analyzer(&gaborator_sys::Params {
+    let g = gaborator::Gaborator::new(&gaborator::GaboratorParams {
         bands_per_octave: 256,
         ff_min: 200.0 / (sr as f64),
         ff_ref: 440.0 / (sr as f64),
         overlap: 0.7,
     });
 
-    let mut coefs = gaborator_sys::create_coefs(&g);
+    let mut coefs = gaborator::Coefs::new(&g);
 
-    gaborator_sys::analyze(&g, &samples, 0, coefs.pin_mut());
+    g.analyze(&samples, 0, &mut coefs);
 
-    gaborator_sys::process(coefs.pin_mut(), -100000, 100000, -100000, 10000000000, &mut gaborator_sys::ProcessOrFillCallback(Box::new(
+    coefs.process(-100000, 100000, -100000, 10000000000,
         |_meta,coef| {
             let (magn, mut _phase) = num_complex::Complex::new(coef.re, coef.im).to_polar();
-            _phase *= 100000.0;
+            _phase *= 100000.0; // lousy way to simulate randomness without reaching for `rand` crate.
             let q = num_complex::Complex::from_polar(magn, _phase);
             coef.re = q.re;
             coef.im = q.im;
         }
-    )));
+    );
 
-    gaborator_sys::synthesize(&g, &coefs, 0, &mut samples);
+    g.synthesize(&coefs, 0, &mut samples);
 
     let mut outp = hound::WavWriter::create("output.wav", hound::WavSpec {
         channels: 1,

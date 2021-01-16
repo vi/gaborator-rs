@@ -1,14 +1,14 @@
 fn main() -> anyhow::Result<()> {
     let sr = 48000;
 
-    let g = gaborator::Gaborator::new(&gaborator::GaboratorParams {
-        bands_per_octave: 256,
+    let g = gaborator_sys::new_analyzer(&gaborator_sys::Params {
+        bands_per_octave: 24,
         ff_min: 200.0 / (sr as f64),
         ff_ref: 440.0 / (sr as f64),
         overlap: 0.7,
     });
 
-    let mut coefs = gaborator::Coefs::new(&g);
+    let mut coefs = gaborator_sys::create_coefs(&g);
 
     let mut max_sample_number = 0;
 
@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
 
     use std::io::BufRead;
 
-    let mut database: std::collections::HashMap<gaborator::CoefMeta, gaborator::Coef> = std::collections::HashMap::with_capacity(1024*1024*10);
+    let mut database: std::collections::HashMap<gaborator_sys::CoefMeta, gaborator_sys::Coef> = std::collections::HashMap::with_capacity(1024*1024*10);
 
     for l in si.lines() {
         let l: String = l?;
@@ -29,33 +29,34 @@ fn main() -> anyhow::Result<()> {
         let phase: f32 = splits[3].parse()?;
 
         let q = num_complex::Complex::from_polar(magnitude, phase);
-        let c = gaborator::Coef { re: q.re, im: q.im };
-        let m = gaborator::CoefMeta { band, sample_time };
+        let c = gaborator_sys::Coef { re: q.re, im: q.im };
+        let m = gaborator_sys::CoefMeta { band, sample_time };
 
         database.insert(m, c);
 
         max_sample_number = max_sample_number.max(sample_time);
     }
 
-    coefs.fill(
+    gaborator_sys::fill(
+        coefs.pin_mut(),
         -100000,
         100000,
         0,
         max_sample_number,
-        
+        &mut gaborator_sys::ProcessOrFillCallback(Box::new(
             |meta,coef| {
                 if let Some(c) = database.get(&meta) {
                     *coef = *c;
                 } else {
-                    *coef = gaborator::Coef::default();
+                    *coef = gaborator_sys::Coef::default();
                 }
             }
-        ,
+        )),
     );
 
     let mut samples: Vec<f32> = vec![0.0; max_sample_number as usize + 100];
 
-    g.synthesize(&coefs, 0, &mut samples);
+    gaborator_sys::synthesize(&g, &coefs, 0, &mut samples);
 
     let mut outp = hound::WavWriter::create(
         "output.wav",
